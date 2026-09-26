@@ -1,0 +1,33 @@
+name: test pull_request
+
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          arch: arm64
+          runner: ubuntu-24.04-arm
+          expander_leg: ubuntu-latest--arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - uses: actions/checkout@v2.2.0
+    - name: Set up Java and Maven
+      uses: actions/setup-java@v4
+      with:
+        java-version: '8'
+        distribution: 'zulu'
+        architecture: ${{ matrix.arch }}
+    - name: Cache m2 package
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - run: mvn test
+    name: test [${{ matrix.expander_leg }}]
+    timeout-minutes: 150
